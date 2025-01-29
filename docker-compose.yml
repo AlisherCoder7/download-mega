@@ -1,0 +1,39 @@
+services:
+  bot:
+    image: python:3.10-slim
+    volumes:
+      - ./data:/app/db  # Host tizimidan Docker konteyneriga
+    restart: always
+    environment:
+      - BOT_TOKEN=8064204547:AAHQsv3mfXXDzppSfM1gyonq5kXPPFjsbrw
+
+  web:
+    build: .
+    command: python instasave.py
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8001:8000"
+
+  rabbitmq:
+    image: rabbitmq:management
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - rabbitmq
+      - redis
